@@ -43,7 +43,7 @@ theta = rand(n,1);
 % in linear_regression.m
 %
 tic;
-options = struct('MaxIterations', 200);
+options = optimoptions(@fminunc,'MaxIterations',200,'SpecifyObjectiveGradient',true);
 theta = fminunc(@linear_regression, theta, options, train.X, train.y);
 fprintf('Optimization took %f seconds.\n', toc);
 
@@ -58,8 +58,8 @@ fprintf('Optimization took %f seconds.\n', toc);
 %Re-initialize parameters
 %theta = rand(n,1);
 %tic;
-%theta = minFunc(@linear_regression_vec, theta, options, train.X, train.y);
-%fprintf('Optimization took %f seconds.\n', toc);
+theta = fminunc(@linear_regression_vec, theta, options, train.X, train.y);
+fprintf('Optimization took %f seconds.\n', toc);
 
 % Plot predicted prices and actual prices from training set.
 actual_prices = train.y;
