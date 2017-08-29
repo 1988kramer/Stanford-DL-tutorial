@@ -43,8 +43,8 @@ theta = rand(n,1);
 % in linear_regression.m
 %
 tic;
-options = struct('MaxIter', 200);
-theta = minFunc(@linear_regression, theta, options, train.X, train.y);
+options = struct('MaxIterations', 200);
+theta = fminunc(@linear_regression, theta, options, train.X, train.y);
 fprintf('Optimization took %f seconds.\n', toc);
 
 % Run minFunc with linear_regression_vec.m as the objective.
