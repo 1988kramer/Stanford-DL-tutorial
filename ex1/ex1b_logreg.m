@@ -20,7 +20,7 @@ m=size(train.X,2);
 n=size(train.X,1);
 
 % Train logistic regression classifier using minFunc
-options = optimoptions(@fminunc,'MaxIterations',100,'Display','iter','SpecifyObjectiveGradient',true);
+options = optimoptions(@fminunc,'MaxIterations',100,'SpecifyObjectiveGradient',true);
 
 % First, we initialize theta to some small random values.
 theta = rand(n,1)*0.001;
@@ -40,10 +40,10 @@ fprintf('Optimization took %f seconds.\n', toc);
 % time for your logistic_regression.m and logistic_regression_vec.m implementations.
 %
 % Uncomment the lines below to run your vectorized code.
-%theta = rand(n,1)*0.001;
-%tic;
-%theta=minFunc(@logistic_regression_vec, theta, options, train.X, train.y);
-%fprintf('Optimization took %f seconds.\n', toc);
+theta = rand(n,1)*0.001;
+tic;
+theta=fminunc(@logistic_regression_vec, theta, options, train.X, train.y);
+fprintf('Optimization took %f seconds.\n', toc);
 
 % Print out training accuracy.
 tic;

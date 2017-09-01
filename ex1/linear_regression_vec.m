@@ -21,4 +21,5 @@ function [f,g] = linear_regression_vec(theta, X,y)
     h = theta' * X;
     f = 0.5 * sum((h - y).^2);
     g = X * (h - y)';
+    
 end

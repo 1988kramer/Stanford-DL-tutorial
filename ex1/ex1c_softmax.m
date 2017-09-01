@@ -23,7 +23,7 @@ m=size(train.X,2);
 n=size(train.X,1);
 
 % Train softmax classifier using minFunc
-options = struct('MaxIter', 200);
+options = optimoptions(@fminunc,'MaxIterations',200,'SpecifyObjectiveGradient',true);
 
 % Initialize theta.  We use a matrix where each column corresponds to a class,
 % and each row is a classifier coefficient for that class.
@@ -36,8 +36,13 @@ theta = rand(n,num_classes-1)*0.001;
 % TODO:  Implement batch softmax regression in the softmax_regression_vec.m
 % file using a vectorized implementation.
 %
+
+% check the gradient function
+gError = grad_check(@softmax_regression_vec, theta(:), 20, train.X, train.y);
+disp(strcat('mean error for gradient: ', num2str(gError)));
+
 tic;
-theta(:)=minFunc(@softmax_regression_vec, theta(:), options, train.X, train.y);
+theta(:)=fminunc(@softmax_regression_vec, theta(:), options, train.X, train.y);
 fprintf('Optimization took %f seconds.\n', toc);
 theta=[theta, zeros(n,1)]; % expand theta to include the last class.
 

@@ -37,6 +37,26 @@ n=size(train.X,1);
 % Initialize the coefficient vector theta to random values.
 theta = rand(n,1);
 
+% check gradient function
+e = 1e-4;
+[f,g] = linear_regression(theta, train.X, train.y);
+sumError = 0;
+% loop over thetas, checking gradient for each
+for i = 1:size(theta,1)
+    theta1 = theta;
+    theta1(i) = theta1(i) - e;
+    theta2 = theta;
+    theta2(i) = theta2(i) + e;
+    [f1,g1] = linear_regression(theta1, train.X, train.y);
+    [f2,g2] = linear_regression(theta2, train.X, train.y);
+    gCheck = (f2 - f1) / (2 * e);
+    error = abs(gCheck - g(i));
+    sumError = sumError + error; % add error for theta(i) to cumulative error
+end
+
+meanError = sumError / size(theta,1);
+disp(strcat('Mean error of gradient; ', num2str(meanError)));
+
 % Run the minFunc optimizer with linear_regression.m as the objective.
 %
 % TODO:  Implement the linear regression objective and gradient computations
