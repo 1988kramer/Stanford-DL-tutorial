@@ -13,10 +13,17 @@ end;
 %% reshape into network
 stack = params2stack(theta, ei);
 numHidden = numel(ei.layer_sizes) - 1;
-hAct = cell(numHidden+1, 1);
-gradStack = cell(numHidden+1, 1);
-%% forward prop
-%%% YOUR CODE HERE %%%
+hAct = cell(numHidden+1, 1); % activation functions
+gradStack = cell(numHidden+1, 1); % gradient stack
+%% forward propagation
+a = cell(1, numel(ei.layer_sizes) + 1); % should store the results of the 
+                                        % activation functions for each layer
+a{1} = data; % activations for layer 1 are just the inputs
+
+for l = 1:numel(ei.layer_sizes)
+    z = stack{l}.W * a{l} + stack{l}.b;
+    a{l + 1} = bsxfun(@rdivide, exp(z), sum(exp(z), 1)); % softmax activation function
+end
 
 %% return here if only predictions desired.
 if po
