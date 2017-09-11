@@ -56,7 +56,7 @@ for i = 1:numHidden + 1
     gradStack{i}.b = deltas{i + 1};
 end
 %% compute weight penalty cost and gradient for non-bias terms
-a = 0.1;
+a = 0.1; % tutorial does not mention how to tune this value
 for i = 1:numel(ei.layer_sizes)
     stack{i}.W = stack{i}.W - a * (((1/size(data, 2)) .* gradStack{i}.W) + ei.lambda .* stack{i}.W);
     stack{i}.b = stack{i}.b - a * ((1/size(data,2)) .* gradStack{i}.b);
