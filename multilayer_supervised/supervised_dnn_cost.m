@@ -21,9 +21,9 @@ a = cell(1, numel(ei.layer_sizes) + 1); % should store the results of the
 a{1} = data; % activations for layer 1 are just the inputs
 
 for l = 1:numel(ei.layer_sizes)
-    z = stack{l}.W * a{l} + stack{l}.b;
-    a{a + l} = 1 ./ (1 + exp(-z)); % sigmoid function
-    % a{l + 1} = bsxfun(@rdivide, exp(z), sum(exp(z), 1)); % softmax activation function
+    z = bsxfun(@plus, stack{l}.W * a{l}, stack{l}.b);
+    % a{l + 1} = 1 ./ (1 + exp(-z)); % sigmoid function
+    a{l + 1} = bsxfun(@rdivide, exp(z), sum(exp(z), 1)); % softmax activation function
 end
 
 %% return here if only predictions desired.
@@ -38,26 +38,29 @@ yMatrix = zeros(ei.output_dim, size(data, 2));
 for i= 1:size(data, 2)
     yMatrix(labels(i), i) = 1;
 end
-hwb = a{numel(layer_sizes) + 1};
-prob = bsxfun(@rdivide, exp(hwb), exp(sum(hwb, 1)));
-h = yMatrix .* log(prob);
+hwb = a{numel(ei.layer_sizes) + 1};
+h = yMatrix .* log(hwb);
 cost = -1 * sum(sum(h,1));
 
 %% compute gradients using backpropagation
 % make delta matrices
-deltas = cell(1, numel(layer_sizes) + 1);
+deltas = cell(1, numel(ei.layer_sizes) + 1);
 % compute delta for output layer
-deltas{numel(layer_sizes) + 1} = -1 * sum(yMatrix - prob, 2);
+deltas{numel(ei.layer_sizes) + 1} = -1 * (yMatrix - hwb) .* (hwb .* (1 - hwb));
 % compute deltas for hidden layers
-for i = numel(layer_sizes):1
-    deltas{i} = stack{i}.W' * deltas{i + 1} .* (a{i}(1 - a{i}));
+for i = numel(ei.layer_sizes):-1:1
+    deltas{i} = stack{i}.W' * deltas{i + 1} .* (a{i} .* (1 - a{i}));
 end
 for i = 1:numHidden + 1
     gradStack{i}.W = deltas{i + 1} * a{i}';
     gradStack{i}.b = deltas{i + 1};
 end
 %% compute weight penalty cost and gradient for non-bias terms
-%%% YOUR CODE HERE %%%
+a = 0.1;
+for i = 1:numel(ei.layer_sizes)
+    stack{i}.W = stack{i}.W - a * (((1/size(data, 2)) .* gradStack{i}.W) + ei.lambda .* stack{i}.W);
+    stack{i}.b = stack{i}.b - a * ((1/size(data,2)) .* gradStack{i}.b);
+end
 
 %% reshape gradients into vector
 [grad] = stack2params(gradStack);
