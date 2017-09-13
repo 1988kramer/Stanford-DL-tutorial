@@ -20,11 +20,14 @@ a = cell(1, numHidden + 2); % should store the results of the
                                         % activation functions for each layer
 a{1} = data; % activations for layer 1 are just the inputs
 
-for l = 1:(numHidden + 1)
+for l = 1:(numHidden)
     z = bsxfun(@plus, stack{l}.W * a{l}, stack{l}.b);
-    % a{l + 1} = 1 ./ (1 + exp(-z)); % sigmoid function
-    a{l + 1} = bsxfun(@rdivide, exp(z), sum(exp(z), 1)); % softmax activation function
+    a{l + 1} = 1 ./ (1 + exp(-z)); % sigmoid function
+
 end
+
+z = bsxfun(@plus, stack{numHidden + 1}.W * a{numHidden + 1}, stack{numHidden + 1}.b);
+a{numHidden + 2} = bsxfun(@rdivide, exp(z), sum(exp(z), 1)); % softmax activation function
 
 pred_prob = a{numHidden + 2};
 
@@ -40,31 +43,30 @@ yMatrix = zeros(ei.output_dim, size(data, 2));
 for i= 1:size(data, 2)
     yMatrix(labels(i), i) = 1;
 end
-hwb = a{numHidden + 2};
-h = yMatrix .* log(hwb);
-cost = -1 * sum(sum(h,1));
+
+h = yMatrix .* log(pred_prob);
+cost = -1 * sum(sum(h), 2);
 
 %% compute gradients using backpropagation
 % make delta matrices
 deltas = cell(1, numHidden + 2);
 % compute delta for output layer
-deltas{numHidden + 2} = -1 * (yMatrix - hwb) .* (hwb .* (1 - hwb));
+deltas{numHidden + 2} = -1 * (yMatrix - pred_prob); 
 % compute deltas for hidden layers
 for i = numHidden + 1:-1:1
     aPrime = a{i} .* (1 - a{i});
     deltas{i} = stack{i}.W' * deltas{i + 1} .* aPrime;
 end
 for i = 1:numHidden + 1
-    gradStack{i}.W = deltas{i + 1} * a{i}';
-    gradStack{i}.b = sum(deltas{i + 1},2);
+    gradStack{i}.W = (deltas{i + 1} * a{i}') / size(data,2);
+    gradStack{i}.b = sum(deltas{i + 1},2) / size(data,2);
 end
 %% compute weight penalty cost and gradient for non-bias terms
 learning_rate = 0.1; % tutorial does not mention how to tune this value
 for i = 1:numel(stack)
-    deltaW = gradStack{i}.W / size(data,2);
-    deltaW = learning_rate * deltaW;
+    deltaW = learning_rate * gradStack{i}.W;
     stack{i}.W = stack{i}.W - deltaW + (learning_rate * ei.lambda * stack{i}.W);
-    stack{i}.b = stack{i}.b - learning_rate * ((1/size(data,2)) .* gradStack{i}.b);
+    stack{i}.b = stack{i}.b - (learning_rate .* gradStack{i}.b);
 end
 
 %% reshape gradients into vector
