@@ -71,7 +71,10 @@ activations = zeros(convDim,convDim,numFilters,numImages);
 % subsampled activations
 activationsPooled = zeros(outputDim,outputDim,numFilters,numImages);
 
-%%% YOUR CODE HERE %%%
+activations = cnnConvolve(filterDim, numFilters, images, Wc, bc);
+activations = 1.0 / (1 + exp(-1 .* activations));
+
+activationsPooled = cnnPool(poolDim, activations);
 
 % Reshape activations into 2-d matrix, hiddenSize x numImages,
 % for Softmax layer
@@ -87,7 +90,8 @@ activationsPooled = reshape(activationsPooled,[],numImages);
 % each class.
 probs = zeros(numClasses,numImages);
 
-%%% YOUR CODE HERE %%%
+z = bsxfun(@plus, Wd * activationsPooled, bd);
+probs = bsxfun(@rdivide, exp(z), sum(exp(z), 1));
 
 %%======================================================================
 %% STEP 1b: Calculate Cost
@@ -97,7 +101,11 @@ probs = zeros(numClasses,numImages);
 
 cost = 0; % save objective into cost
 
-%%% YOUR CODE HERE %%%
+% create sparse matrix where yMatrix(i, label(i)) is 1 
+% and all other values are zero
+yMatrix = sparse(labels, 1 + (0:size(labels, 1)-1), 1);
+% compute cost using cross entropy
+cost = -1 * sum(sum(yMatrix .* log(probs)), 2);
 
 % Makes predictions given probs and returns without backproagating errors.
 if pred
@@ -117,8 +125,16 @@ end;
 %  Use the kron function and a matrix of ones to do this upsampling 
 %  quickly.
 
-%%% YOUR CODE HERE %%%
-
+% compute delta for fully connected layer
+fcDelta = -1 * (yMatrix - prob);
+% upsample fcDelta
+deltaPool = (1/poolDim^2) * kron(fcDelta,ones(poolDim));
+% compute deltas for conv filters
+convDeltas = zeros(filterDim, filterDim, numFilters);
+for i = 1:numFilters
+    aPrime = activations(:,:,i,:) .* (1 - activations(:,:,i,:));
+    convDeltas(:,:,i) = (Wc(:,:,i)' * deltaPool) .* aPrime;
+end
 %%======================================================================
 %% STEP 1d: Gradient Calculation
 %  After backpropagating the errors above, we can use them to calculate the
@@ -127,7 +143,11 @@ end;
 %  a filter in the convolutional layer, convolve the backpropagated error
 %  for that filter with each image and aggregate over images.
 
-%%% YOUR CODE HERE %%%
+Wd_grad = fcDelta * probs' / size(labels);
+bd_grad = sum(fcDelta, 2) / size(labels);
+
+% left off here
+% still need to compute gradients for the convolutional layer
 
 %% Unroll gradient into grad vector for minFunc
 grad = [Wc_grad(:) ; Wd_grad(:) ; bc_grad(:) ; bd_grad(:)];
