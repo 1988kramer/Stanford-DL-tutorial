@@ -24,7 +24,7 @@ function [cost, grad, preds] = cnnCost(theta,images,labels,numClasses,...
 
 if ~exist('pred','var')
     pred = false;
-end;
+end
 
 
 imageDim = size(images,1); % height/width of image
@@ -113,7 +113,7 @@ if pred
     preds = preds';
     grad = 0;
     return;
-end;
+end
 
 %%======================================================================
 %% STEP 1c: Backpropagation
@@ -126,14 +126,21 @@ end;
 %  quickly.
 
 % compute delta for fully connected layer
-fcDelta = -1 * (yMatrix - prob);
-% upsample fcDelta
-deltaPool = (1/poolDim^2) * kron(fcDelta,ones(poolDim));
+deltaNl = -1 * (yMatrix - probs);
+aPrime = activationsPooled .* (1 - activationsPooled);
+fcDelta = (Wd' * deltaNl) .* aPrime;
+fcDelta = reshape(fcDelta, [4,4,numFilters,numImages]);
+
 % compute deltas for conv filters
-convDeltas = zeros(filterDim, filterDim, numFilters);
+% still a problem here
+convDeltas = zeros(convDim, convDim, numFilters, numImages);
 for i = 1:numFilters
-    aPrime = activations(:,:,i,:) .* (1 - activations(:,:,i,:));
-    convDeltas(:,:,i) = (Wc(:,:,i)' * deltaPool) .* aPrime;
+    for j = 1:numImages
+        % upsample fcDelta
+        deltaPool = (1/poolDim^2) * kron(fcDelta(:,:,i,j),ones(poolDim));
+        aPrime = activations(:,:,i,j) .* (1 - activations(:,:,i,j));
+        convDeltas(:,:,i,j) = deltaPool .* aPrime;
+    end
 end
 %%======================================================================
 %% STEP 1d: Gradient Calculation
@@ -142,12 +149,18 @@ end
 %  softmax layer is calculated as usual.  To calculate the gradient w.r.t.
 %  a filter in the convolutional layer, convolve the backpropagated error
 %  for that filter with each image and aggregate over images.
+%fcDelta = reshape(fcDelta,[],numImages);
+Wd_grad = (deltaNl * activationsPooled');
+bd_grad = (sum(deltaNl, 2));
 
-Wd_grad = fcDelta * probs' / size(labels);
-bd_grad = sum(fcDelta, 2) / size(labels);
-
-% left off here
-% still need to compute gradients for the convolutional layer
+% compute gradients for conv layers
+for i = 1:numFilters
+    for j = 1:numImages
+        newGrad = rot90(conv2(images(:,:,j), rot90(convDeltas(:,:,i,j),2), 'valid'),2);
+        Wc_grad(:,:,i) = Wc_grad(:,:,i) + newGrad;
+        bc_grad(i) = bc_grad(i) + sum(sum(convDeltas(:,:,i,j)));
+    end
+end
 
 %% Unroll gradient into grad vector for minFunc
 grad = [Wc_grad(:) ; Wd_grad(:) ; bc_grad(:) ; bd_grad(:)];
