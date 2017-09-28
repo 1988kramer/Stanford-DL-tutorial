@@ -72,7 +72,7 @@ activations = zeros(convDim,convDim,numFilters,numImages);
 activationsPooled = zeros(outputDim,outputDim,numFilters,numImages);
 
 activations = cnnConvolve(filterDim, numFilters, images, Wc, bc);
-activations = 1.0 / (1 + exp(-1 .* activations));
+%activations = 1.0 / (1 + exp(-1 .* activations));
 
 activationsPooled = cnnPool(poolDim, activations);
 
@@ -127,9 +127,9 @@ end
 
 % compute delta for fully connected layer
 deltaNl = -1 * (yMatrix - probs);
-aPrime = activationsPooled .* (1 - activationsPooled);
-fcDelta = (Wd' * deltaNl) .* aPrime;
-fcDelta = reshape(fcDelta, [4,4,numFilters,numImages]);
+
+deltaFC = Wd' * deltaNl;
+deltaFC = reshape(deltaFC,[outputDim,outputDim,numFilters,numImages]);
 
 % compute deltas for conv filters
 % still a problem here
@@ -137,9 +137,9 @@ convDeltas = zeros(convDim, convDim, numFilters, numImages);
 for i = 1:numFilters
     for j = 1:numImages
         % upsample fcDelta
-        deltaPool = (1/poolDim^2) * kron(fcDelta(:,:,i,j),ones(poolDim));
+        deltaPool = (1/poolDim^2) * kron(deltaFC(:,:,i,j),ones(poolDim));
         aPrime = activations(:,:,i,j) .* (1 - activations(:,:,i,j));
-        convDeltas(:,:,i,j) = deltaPool .* aPrime;
+        convDeltas(:,:,i,j) = deltaPool * aPrime;
     end
 end
 %%======================================================================
@@ -156,10 +156,14 @@ bd_grad = (sum(deltaNl, 2));
 % compute gradients for conv layers
 for i = 1:numFilters
     for j = 1:numImages
-        newGrad = rot90(conv2(images(:,:,j), rot90(convDeltas(:,:,i,j),2), 'valid'),2);
+        im = squeeze(images(:,:,j));
+        filter = rot90(squeeze(convDeltas(:,:,i,j)),2);
+        newGrad = conv2(im, filter, 'valid');
         Wc_grad(:,:,i) = Wc_grad(:,:,i) + newGrad;
         bc_grad(i) = bc_grad(i) + sum(sum(convDeltas(:,:,i,j)));
     end
+    %Wc_grad(:,:,i) = Wc_grad(:,:,i) ./ numImages;
+    %bc_grad(i) = bc_grad(i) ./ numImages;
 end
 
 %% Unroll gradient into grad vector for minFunc
