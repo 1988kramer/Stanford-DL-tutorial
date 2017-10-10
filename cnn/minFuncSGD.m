@@ -28,7 +28,7 @@ assert(all(isfield(options,{'epochs','alpha','minibatch'})),...
         'Some options not defined');
 if ~isfield(options,'momentum')
     options.momentum = 0.9;
-end;
+end
 epochs = options.epochs;
 alpha = options.alpha;
 minibatch = options.minibatch;
@@ -52,7 +52,7 @@ for e = 1:epochs
         % increase momentum after momIncrease iterations
         if it == momIncrease
             mom = options.momentum;
-        end;
+        end
 
         % get next randomly selected minibatch
         mb_data = data(:,:,rp(s:s+minibatch-1));
@@ -67,14 +67,15 @@ for e = 1:epochs
         % sgd update rule
         
         %%% YOUR CODE HERE %%%
-        
-        fprintf('Epoch %d: Cost on iteration %d is %f\n',e,it,cost);
-    end;
+        velocity = mom * velocity + alpha * grad;
+        theta = theta - velocity;
+        %fprintf('Epoch %d: Cost on iteration %d is %f\n',e,it,cost);
+    end
 
     % aneal learning rate by factor of two after each epoch
     alpha = alpha/2.0;
 
-end;
+end
 
 opttheta = theta;
 
