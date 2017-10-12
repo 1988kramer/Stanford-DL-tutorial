@@ -128,7 +128,7 @@ end
 % compute delta for fully connected layer
 deltaNl = -1 * (yMatrix - probs);
 
-deltaFC = Wd' * deltaNl;
+deltaFC = (Wd' * deltaNl); % .* (activationsPooled .* (1 - activationsPooled));
 deltaFC = reshape(deltaFC,[outputDim,outputDim,numFilters,numImages]);
 
 % compute deltas for conv filters
@@ -139,7 +139,7 @@ for i = 1:numFilters
         % upsample fcDelta
         deltaPool = (1/poolDim^2) * kron(deltaFC(:,:,i,j),ones(poolDim));
         aPrime = activations(:,:,i,j) .* (1 - activations(:,:,i,j));
-        convDeltas(:,:,i,j) = deltaPool * aPrime;
+        convDeltas(:,:,i,j) = deltaPool .* aPrime;
     end
 end
 %%======================================================================

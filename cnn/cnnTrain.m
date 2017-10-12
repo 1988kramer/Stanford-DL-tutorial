@@ -39,7 +39,7 @@ theta = cnnInitParams(imageDim,filterDim,numFilters,poolDim,numClasses);
 %  calculation for your cnnCost.m function.  You may need to add the
 %  appropriate path or copy the file to this directory.
 
-DEBUG=true;  % set this to true to check gradient
+DEBUG=false;  % set this to true to check gradient
 if DEBUG
     % To speed up gradient checking, we will use a reduced network and
     % a debugging data set
@@ -50,6 +50,7 @@ if DEBUG
     db_labels = labels(1:10);
     db_theta = cnnInitParams(imageDim,db_filterDim,db_numFilters,...
                 db_poolDim,numClasses);
+    outDim = (imageDim - db_filterDim + 1) / db_poolDim;
     
     [cost grad] = cnnCost(db_theta,db_images,db_labels,numClasses,...
                                 db_filterDim,db_numFilters,db_poolDim);
@@ -61,7 +62,22 @@ if DEBUG
                                 db_numFilters,db_poolDim), db_theta);
  
     % Use this to visually compare the gradients side by side
-    disp([numGrad grad]);
+    display = [numGrad grad];
+    disp('Wc_grad begins');
+    j = db_numFilters * db_filterDim^2 + 1;
+    k = j + numClasses * outDim^2 * db_numFilters;
+    l = k + db_numFilters;
+    for i = 1:size(display,1)
+        if i == j
+            disp('Wd_grad begins');
+        elseif i == k
+            j = j + db_numFilters;
+            disp('bc_grad begins')
+        elseif i == l
+            disp('bd_grad begins')
+        end
+        disp(display(i,:));
+    end
     
     diff = norm(numGrad-grad)/norm(numGrad+grad);
     % Should be small. In our implementation, these values are usually 
