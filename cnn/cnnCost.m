@@ -103,9 +103,10 @@ cost = 0; % save objective into cost
 
 % create sparse matrix where yMatrix(i, label(i)) is 1 
 % and all other values are zero
-yMatrix = sparse(labels, 1 + (0:size(labels, 1)-1), 1);
+yMatrix = sparse(labels, 1:size(labels, 1), 1);
 % compute cost using cross entropy
-cost = -1 * sum(sum(yMatrix .* log(probs)), 2);
+cost = -1 * sum(sum(yMatrix .* log(probs), 2));
+cost = full(cost);
 
 % Makes predictions given probs and returns without backproagating errors.
 if pred
@@ -128,7 +129,7 @@ end
 % compute delta for fully connected layer
 deltaNl = -1 * (yMatrix - probs);
 
-deltaFC = (Wd' * deltaNl); % .* (activationsPooled .* (1 - activationsPooled));
+deltaFC = full(Wd' * deltaNl); 
 deltaFC = reshape(deltaFC,[outputDim,outputDim,numFilters,numImages]);
 
 % compute deltas for conv filters
