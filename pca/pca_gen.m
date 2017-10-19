@@ -15,14 +15,17 @@ display_network(x(:,randsel));
 %% Step 0b: Zero-mean the data (by row)
 %  You can make use of the mean and repmat/bsxfun functions.
 
-%%% YOUR CODE HERE %%%
+avg = mean(x, 1);
+x = x - repmat(avg, size(x, 1), 1);
 
 %%================================================================
 %% Step 1a: Implement PCA to obtain xRot
 %  Implement PCA to obtain xRot, the matrix in which the data is expressed
 %  with respect to the eigenbasis of sigma, which is the matrix U.
 
-%%% YOUR CODE HERE %%%
+sigma = (x * x') / size(x,2);
+[U, S, V] = svd(sigma);
+xRot = U' * x;
 
 %%================================================================
 %% Step 1b: Check your implementation of PCA
@@ -33,11 +36,12 @@ display_network(x(:,randsel));
 %  When visualised as an image, you should see a straight line across the
 %  diagonal (non-zero entries) against a blue background (zero entries).
 
-%%% YOUR CODE HERE %%%
+
 
 % Visualise the covariance matrix. You should see a line across the
 % diagonal against a blue background.
 figure('name','Visualisation of covariance matrix');
+covar = (xRot * xRot') / size(xRot, 2);
 imagesc(covar);
 
 %%================================================================
@@ -45,7 +49,13 @@ imagesc(covar);
 %  Write code to determine k, the number of components to retain in order
 %  to retain at least 99% of the variance.
 
-%%% YOUR CODE HERE %%%
+k = 1;
+eigenSum = sum(sum(S));
+retained = sum(sum(S(:,1:k))) / eigenSum;
+while retained < 0.99
+    k = k + 1;
+    retained = sum(sum(S(:,1:k))) / eigenSum;
+end
 
 %%================================================================
 %% Step 3: Implement PCA with dimension reduction
@@ -61,7 +71,8 @@ imagesc(covar);
 %  there is little loss due to throwing away the principal components that
 %  correspond to dimensions with low variation.
 
-%%% YOUR CODE HERE %%%
+xTilde = U(:,1:k)' * x;
+xHat = U(1:k,1:k) * xTilde;
 
 % Visualise the data, and compare it to the raw data
 % You should observe that the raw and processed data are of comparable quality.
