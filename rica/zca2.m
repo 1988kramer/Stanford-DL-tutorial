@@ -6,5 +6,8 @@ epsilon = 1e-4;
 
 % x is the input patch data of size
 % z is the ZCA transformed data. The dimenison of z = x.
-
-%%% YOUR CODE HERE %%%
+avg = mean(x, 1);
+x = x - repmat(avg, size(x, 1), 1);
+sigma = (x * x') / size(x,2);
+[U, S, V] = svd(sigma);
+Z = U * diag(1./sqrt(diag(S) + epsilon))* U' * x;
