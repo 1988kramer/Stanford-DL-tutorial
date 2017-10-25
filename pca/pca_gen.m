@@ -42,7 +42,7 @@ xRot = U' * x;
 % diagonal against a blue background.
 figure('name','Visualisation of covariance matrix');
 covar = (xRot * xRot') / size(xRot, 2);
-imagesc(covar);
+% imagesc(covar);
 
 %%================================================================
 %% Step 2: Find k, the number of components to retain
